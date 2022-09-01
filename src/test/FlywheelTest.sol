@@ -5,6 +5,7 @@ import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 import {MockBooster} from "./mocks/MockBooster.sol";
 import {MockRewards} from "./mocks/MockRewards.sol";
+import {MockERC20NT} from "./mocks/MockERC20NT.sol";
 
 import "../FlywheelCore.sol";
 
@@ -13,7 +14,7 @@ contract FlywheelTest is DSTestPlus {
     MockRewards rewards;
     MockBooster booster;
 
-    MockERC20 strategy;
+    MockERC20NT strategy;
     MockERC20 rewardToken;
 
     address constant user = address(0xDEAD);
@@ -22,24 +23,18 @@ contract FlywheelTest is DSTestPlus {
     function setUp() public {
         rewardToken = new MockERC20("test token", "TKN", 18);
 
-        strategy = new MockERC20("test strategy", "TKN", 18);
+        strategy = new MockERC20NT("test strategy", "TKN", 18);
 
         booster = new MockBooster();
 
-        flywheel = new FlywheelCore(
-            rewardToken,
-            MockRewards(address(0)),
-            IFlywheelBooster(address(0)),
-            address(this),
-            Authority(address(0))
-        );
+        flywheel = new FlywheelCore(rewardToken, MockRewards(address(0)), address(this), Authority(address(0)));
 
         rewards = new MockRewards(flywheel);
 
         flywheel.setFlywheelRewards(rewards);
     }
 
-    function testAddStrategy(ERC20 strat) public {
+    function testAddStrategy(ERC20NT strat) public {
         flywheel.addStrategyForRewards(strat);
         (uint224 index, uint32 timestamp) = flywheel.strategyState(strat);
         require(index == flywheel.ONE());
@@ -66,17 +61,6 @@ contract FlywheelTest is DSTestPlus {
         hevm.prank(address(1));
         hevm.expectRevert(bytes("UNAUTHORIZED"));
         flywheel.setFlywheelRewards(IFlywheelRewards(address(1)));
-    }
-
-    function testSetFlywheelBooster(IFlywheelBooster booster) public {
-        flywheel.setBooster(booster);
-        require(flywheel.flywheelBooster() == booster);
-    }
-
-    function testSetFlywheelBoosterUnauthorized() public {
-        hevm.prank(address(1));
-        hevm.expectRevert(bytes("UNAUTHORIZED"));
-        flywheel.setBooster(IFlywheelBooster(address(1)));
     }
 
     function testAccrue(
@@ -247,42 +231,5 @@ contract FlywheelTest is DSTestPlus {
         require(flywheel.rewardsAccrued(user) == 0);
 
         flywheel.claimRewards(user);
-    }
-
-    function testBoost(
-        uint128 userBalance1,
-        uint128 userBalance2,
-        uint128 rewardAmount,
-        uint128 boost
-    ) public {
-        hevm.assume(userBalance1 != 0 && userBalance2 != 0 && rewardAmount != 0);
-
-        booster.setBoost(user, boost);
-
-        flywheel.setBooster(IFlywheelBooster(address(booster)));
-
-        strategy.mint(user, userBalance1);
-        strategy.mint(user2, userBalance2);
-
-        rewardToken.mint(address(rewards), rewardAmount);
-        rewards.setRewardsAmount(strategy, rewardAmount);
-
-        flywheel.addStrategyForRewards(strategy);
-
-        uint256 accrued = flywheel.accrue(strategy, user);
-
-        (uint224 index, ) = flywheel.strategyState(strategy);
-
-        uint256 diff = (rewardAmount * flywheel.ONE()) / (uint256(userBalance1) + userBalance2 + boost);
-        uint256 user1Boosted = uint256(userBalance1) + boost;
-
-        require(index == flywheel.ONE() + diff);
-        require(flywheel.userIndex(strategy, user) == index);
-        require(flywheel.rewardsAccrued(user) == (diff * user1Boosted) / flywheel.ONE());
-        require(accrued == (diff * user1Boosted) / flywheel.ONE());
-
-        require(flywheel.rewardsAccrued(user2) == 0 ether);
-
-        require(rewardToken.balanceOf(address(rewards)) == rewardAmount);
     }
 }

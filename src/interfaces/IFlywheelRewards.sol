@@ -3,6 +3,8 @@ pragma solidity 0.8.10;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {FlywheelCore} from "../FlywheelCore.sol";
+import {ERC20NT} from "../libraries/ERC20NT.sol";
+import {RewardsDepot} from "../rewards/RewardsDepot.sol";
 
 /**
  @title Rewards Module for Flywheel
@@ -30,10 +32,13 @@ interface IFlywheelRewards {
      @param lastUpdatedTimestamp the last time rewards were accrued for the strategy.
      @return rewards the amount of rewards accrued to the market
     */
-    function getAccruedRewards(ERC20 strategy, uint32 lastUpdatedTimestamp) external returns (uint256 rewards);
+    function getAccruedRewards(ERC20NT strategy, uint32 lastUpdatedTimestamp) external returns (uint256 rewards);
 
     /// @notice return the flywheel core address
     function flywheel() external view returns (FlywheelCore);
+
+    /// @notice return the flywheel core address
+    function rewardsDepot() external view returns (RewardsDepot);
 
     /// @notice return the reward token associated with flywheel core.
     function rewardToken() external view returns (ERC20);

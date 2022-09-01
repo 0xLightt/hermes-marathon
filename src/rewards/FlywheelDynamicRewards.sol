@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "./BaseFlywheelRewards.sol";
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
+import {ERC20NT} from "../libraries/ERC20NT.sol";
 
 /** 
  @title Flywheel Dynamic Reward Stream
@@ -26,18 +27,19 @@ abstract contract FlywheelDynamicRewards is BaseFlywheelRewards {
         uint192 reward;
     }
 
-    mapping(ERC20 => RewardsCycle) public rewardsCycle;
+    mapping(ERC20NT => RewardsCycle) public rewardsCycle;
 
     constructor(FlywheelCore _flywheel, uint32 _rewardsCycleLength) BaseFlywheelRewards(_flywheel) {
         rewardsCycleLength = _rewardsCycleLength;
     }
 
     /**
-     @notice calculate and transfer accrued rewards to flywheel core
-     @param strategy the strategy to accrue rewards for
-     @return amount the amount of tokens accrued and transferred
-     */
-    function getAccruedRewards(ERC20 strategy, uint32 lastUpdatedTimestamp)
+     @notice calculate the rewards amount accrued to a strategy since the last update.
+     @param strategy the strategy to accrue rewards for.
+     @param lastUpdatedTimestamp the last time rewards were accrued for the strategy.
+     @return amount the amount of rewards accrued to the market
+    */
+    function getAccruedRewards(ERC20NT strategy, uint32 lastUpdatedTimestamp)
         external
         override
         onlyFlywheel
@@ -65,5 +67,10 @@ abstract contract FlywheelDynamicRewards is BaseFlywheelRewards {
         }
     }
 
-    function getNextCycleRewards(ERC20 strategy) internal virtual returns (uint192);
+    /**
+     @notice get and transfer next week's rewards.
+     @param strategy the strategy to accrue rewards for.
+     @return amount the amount of tokens transferred.
+     */
+    function getNextCycleRewards(ERC20NT strategy) internal virtual returns (uint192);
 }
