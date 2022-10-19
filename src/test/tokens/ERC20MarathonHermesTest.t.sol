@@ -50,6 +50,13 @@ contract ERC20MarathonHermesTest is DSTestPlus {
         require(marathonHermes.balanceOf(to) - marathonHermesBal == stakeAmount);
     }
 
+    function testStakeFail(address to, uint256 stakeAmount) public {
+        hevm.assume(to != address(this));
+        hevm.prank(to);
+        hevm.expectRevert(bytes("UNAUTHORIZED"));
+        marathonHermes.stake(to, stakeAmount);
+    }
+
     function testAccrue(
         uint128 userBalance1,
         uint128 userBalance2,

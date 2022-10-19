@@ -152,7 +152,6 @@ contract MarathonLocker {
             currentStrategy = _newStrategy;
             rewardsDepot.setActiveStrategy(address(_newStrategy));
             flywheel.addStrategyForRewards(_newStrategy);
-            rewardsDepot.setActiveStrategy(address(_newStrategy));
 
             epochStart = _thisEpoch;
 
